@@ -3,7 +3,8 @@
 require_once get_template_directory() . '/enable.js.module.php';
 require_once get_template_directory() . '/setup/enqueue.php';
 
-function my_custom_menu_page() {
+function my_custom_menu_page()
+{
     add_menu_page(
         'Custom Settings',
         'Custom Settings',
@@ -15,7 +16,8 @@ function my_custom_menu_page() {
 
 add_action('admin_menu', 'my_custom_menu_page');
 
-function custom_settings_page() {
+function custom_settings_page()
+{
     ?>
     <div class="wrap">
         <h1>Custom Settings</h1>
@@ -23,7 +25,7 @@ function custom_settings_page() {
         <form id="my-custom-form" method="post" action="options.php">
             <?php settings_fields('custom_settings_group'); ?>
             <?php do_settings_sections('custom_settings_group'); ?>
-            
+
             <div id="custom-fields-container">
                 <?php
                 $options = get_option('custom_fields');
@@ -51,7 +53,8 @@ function custom_settings_page() {
     <?php
 }
 
-function my_custom_settings() {
+function my_custom_settings()
+{
     // Register settings and fields dynamically
     register_setting('custom_settings_group', 'custom_fields');
 
@@ -74,12 +77,14 @@ function my_custom_settings() {
     }
 }
 
-function my_section_callback() {
+function my_section_callback()
+{
     // Output any section-specific content
     echo '<p>This is my custom section.</p>';
 }
 
-function custom_field_callback($args) {
+function custom_field_callback($args)
+{
     // Output the field markup dynamically
     $field_name = $args['field_name'];
     $field_value = $args['field_value'];
@@ -89,27 +94,57 @@ function custom_field_callback($args) {
 
 add_action('admin_init', 'my_custom_settings');
 
-function save_custom_field() {
+function save_custom_fields()
+{
     check_ajax_referer('custom_nonce', 'security');
 
-    if (isset($_POST['field_name']) && isset($_POST['field_value'])) {
-        $field_name = sanitize_key($_POST['field_name']);
-        $field_value = sanitize_text_field($_POST['field_value']);
+    if (isset($_POST['field_pairs'])) {
+        // Apply the callback function to each sub-array
+        $sanitizedFieldPairs = array_map(
+            fn($fieldPair) =>
+            array(
+                'field_name' => sanitize_key($fieldPair['field_name']),
+                'default_value' => sanitize_text_field($fieldPair['default_value']),
+            ),
+            $_POST['field_pairs']
+        );
+
+        error_log("Sanitized Field Pairs: " . print_r($sanitizedFieldPairs, true));
 
         $options = get_option('custom_fields');
-        $options[$field_name] = $field_value;
-        update_option('custom_fields', $options);
+        // Check if $options is an array, initialize it if it's not
+        if (!is_array($options)) {
+            $options = array();
+        }
+        
+        error_log("Options before update: " . print_r($options, true));
+
+        foreach ($sanitizedFieldPairs as $fieldPair) {
+            $options[$fieldPair['field_name']] = $fieldPair['default_value'];
+        }
+
+        error_log("Options after update: " . print_r($options, true));
+
+        $result = update_option('custom_fields', $options);
+
+        if ($result) {
+            error_log("Options Updated Successfully");
+        } else {
+            error_log("Failed to Update Options");
+        }
     }
 
     wp_die();
 }
 
-add_action('wp_ajax_save_custom_field', 'save_custom_field');
 
-function get_custom_settings() {
+add_action('wp_ajax_save_custom_fields', 'save_custom_fields');
+
+function get_custom_settings()
+{
     $options = get_option('custom_fields');
     //error_log("Array contents: " . print_r($options, true));
-    
+
     // Convert the associative array to key-value pairs
     /* $keyValueArray = array_map(function ($key, $value) {
         return array($key => $value);
@@ -119,10 +154,10 @@ function get_custom_settings() {
         'field2' => 'value2',
         'field3' => 'value3',
     ); */
-    
+
     // Send the response as JSON
     wp_send_json($options);
-    
+
     // Always exit to avoid extra output
     wp_die();
 }
