@@ -1,6 +1,7 @@
 <?php
 
 require_once get_template_directory() . '/enable.js.module.php';
+require_once get_template_directory() . '/includes/helper-functions.php';
 require_once get_template_directory() . '/setup/enqueue.php';
 
 function my_custom_menu_page()
@@ -29,12 +30,13 @@ function custom_settings_page()
             <div id="custom-fields-container">
                 <?php
                 $options = get_option('custom_fields');
+                error_log(''. print_r($options, true));
                 if ($options) {
                     foreach ($options as $field_name => $field_value) {
                         echo '<div class="custom-field">';
                         echo '<label for="' . esc_attr($field_name) . '">Custom Field Label:</label>';
                         echo '<input type="text" id="' . esc_attr($field_name) . '" name="custom_fields[' . esc_attr($field_name) . ']" value="' . esc_attr($field_value) . '" />';
-                        echo '<button class="remove-field">Remove</button>';
+                        echo '<button type="button" class="remove-field" data-field-name="' . esc_attr($field_name) . '">Remove</button>';
                         echo '</div>';
                     }
                 }
@@ -136,29 +138,4 @@ function save_custom_fields()
 
     wp_die();
 }
-
-
 add_action('wp_ajax_save_custom_fields', 'save_custom_fields');
-
-function get_custom_settings()
-{
-    $options = get_option('custom_fields');
-    //error_log("Array contents: " . print_r($options, true));
-
-    // Convert the associative array to key-value pairs
-    /* $keyValueArray = array_map(function ($key, $value) {
-        return array($key => $value);
-    }, array_keys($options), $options); */
-    /* $options = array(
-        'field1' => 'value1',
-        'field2' => 'value2',
-        'field3' => 'value3',
-    ); */
-
-    // Send the response as JSON
-    wp_send_json($options);
-
-    // Always exit to avoid extra output
-    wp_die();
-}
-add_action('wp_ajax_get_custom_settings', 'get_custom_settings');

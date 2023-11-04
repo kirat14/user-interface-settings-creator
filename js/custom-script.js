@@ -1,4 +1,5 @@
 import { fieldTemplate } from './template.js';
+import { prepare_ajax_request } from './helper-functions.js';
 
 var fieldCount = 0;
 var field_name = 'field-name';
@@ -60,15 +61,7 @@ function save_custom_field() {
     console.log(fieldPairsData);
 
     // Include the field pairs data in the AJAX request
-    var data = {
-        action: 'save_custom_fields',
-        field_pairs: fieldPairsData,
-        security: custom_script_vars.ajax_nonce,
-    };
-
-    jQuery.post(custom_script_vars.ajax_url, data, function (response) {
-        console.log('Field Saved:', response);
-    });
+    prepare_ajax_request('save_custom_fields', {field_pairs: fieldPairsData});
 
 }
 
@@ -80,6 +73,21 @@ jQuery(document).ready(function () {
     jQuery('#add-custom-field').on('click', function () {
         fieldCount++;
         appendFields(field_name + fieldCount, default_value + fieldCount);
+    });
+
+    jQuery('.remove-field').on('click', function (event) {
+        event.preventDefault();
+        var $this = jQuery(this); // Store a reference to 'this'
+        let option_key = jQuery(this).data('field-name');
+        let data = {
+            'option_group_key': 'custom_fields',
+            'option_key': option_key
+        }
+        prepare_ajax_request('remove_setting', data, function (response) {
+            if(response === true)
+            $this.parent(".custom-field").remove();
+        });
+
     });
 
     jQuery('form#my-custom-form').on('submit', function (event) {
