@@ -106,7 +106,7 @@ jQuery(document).on('click', '.remove-field', function (event) {
     }
     prepare_ajax_request('remove_setting', data, function (response) {
         if (response === true)
-            $this.parent(".custom-field").remove();
+            $this.parent(".field-pair").remove();
     });
 
     // Track option's keys naming order
